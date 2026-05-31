@@ -5,5 +5,3 @@ terraform/*.tfstate
 terraform/*.tfstate.*
 terraform/terraform.tfvars
 terraform/*.zip
-terraform/grading.json
-grading.json
