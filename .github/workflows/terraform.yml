@@ -19,6 +19,9 @@ permissions:
   contents: read
   pull-requests: write
 
+env:
+  TF_VAR_student_id: "ALT/SOE/025/1507"
+
 jobs:
   terraform-plan:
     name: Terraform Plan
