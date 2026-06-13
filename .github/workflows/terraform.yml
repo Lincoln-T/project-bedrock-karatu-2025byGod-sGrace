@@ -20,7 +20,7 @@ permissions:
   pull-requests: write
 
 env:
-  TF_VAR_student_id: "ALT/SOE/025/1507"
+  TF_VAR_student_id: "alt-soe-025-1507"
 
 jobs:
   terraform-plan:
