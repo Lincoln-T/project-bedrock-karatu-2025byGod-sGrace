@@ -1,0 +1,33 @@
+cart:
+  app:
+    persistence:
+      provider: dynamodb
+      dynamodb:
+        tableName: Items
+        createTable: false
+  dynamodb:
+    create: false
+
+catalog:
+  app:
+    persistence:
+      provider: mysql
+      endpoint: REPLACE_WITH_CATALOG_RDS_ENDPOINT:3306
+      database: catalog
+      secret:
+        create: true
+        name: catalog-db
+        username: catalog
+        password: REPLACE_FROM_AWS_SECRETS_MANAGER
+
+orders:
+  app:
+    persistence:
+      provider: postgres
+      endpoint: REPLACE_WITH_ORDERS_RDS_ENDPOINT:5432
+      database: orders
+      secret:
+        create: true
+        name: orders-db
+        username: orders
+        password: REPLACE_FROM_AWS_SECRETS_MANAGER

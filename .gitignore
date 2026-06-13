@@ -5,3 +5,12 @@ terraform/*.tfstate
 terraform/*.tfstate.*
 terraform/terraform.tfvars
 terraform/*.zip
+
+# Project Bedrock private deployment values
+terraform/managed-data-values.yaml
+terraform/managed-data-values.yaml.*
+private-grading-output.json
+terraform/private-grading-output.json
+terraform/terraform.tfvars
+*.tfstate
+*.tfstate.*
