@@ -6,12 +6,21 @@ on:
       - main
     paths:
       - "terraform/**"
+      - ".github/workflows/terraform.yml"
 
   push:
     branches:
       - main
     paths:
       - "terraform/**"
+      - ".github/workflows/terraform.yml"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VAR_student_id: "ALT/SOE/025/1507"
 
 jobs:
   terraform-plan:
@@ -36,9 +45,11 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Format Check
         run: terraform fmt -check
@@ -47,7 +58,74 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan
+        id: plan
+        shell: bash
+        run: |
+          set +e
+          terraform plan \
+            -input=false \
+            -no-color \
+            -out=tfplan > plan-output.txt 2>&1
+
+          PLAN_EXIT_CODE=$?
+          echo "exitcode=$PLAN_EXIT_CODE" >> "$GITHUB_OUTPUT"
+          cat plan-output.txt
+          exit 0
+
+      - name: Post Terraform Plan to Pull Request
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PLAN_EXIT_CODE: ${{ steps.plan.outputs.exitcode }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const planPath = 'terraform/plan-output.txt';
+
+            let plan = 'Terraform plan output was not generated.';
+
+            if (fs.existsSync(planPath)) {
+              plan = fs.readFileSync(planPath, 'utf8');
+            }
+
+            const maxLength = 60000;
+            if (plan.length > maxLength) {
+              plan =
+                plan.substring(0, maxLength) +
+                '\n\nPlan output was shortened because it exceeded the GitHub comment limit.';
+            }
+
+            const exitCode = process.env.PLAN_EXIT_CODE;
+            const status = exitCode === '0'
+              ? '✅ Terraform Plan succeeded'
+              : '❌ Terraform Plan failed';
+
+            const body = [
+              `## ${status}`,
+              '',
+              '<details><summary>Show Terraform Plan</summary>',
+              '',
+              '```terraform',
+              plan,
+              '```',
+              '',
+              '</details>',
+              '',
+              `Workflow: ${context.workflow}`,
+              `Commit: ${context.sha}`
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+      - name: Fail if Terraform Plan failed
+        if: steps.plan.outputs.exitcode != '0'
+        run: exit 1
 
   terraform-apply:
     name: Terraform Apply
@@ -71,9 +149,11 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -input=false
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -input=false -auto-approve
